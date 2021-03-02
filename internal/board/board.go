@@ -26,3 +26,21 @@ func (b Board) FillSquare(elem int, s Square) error {
 	b[elem] = s
 	return nil
 }
+
+var winConditions = [8][3]int{
+	{0, 1, 2}, {3, 4, 5}, {6, 7, 8}, // left to right
+	{0, 3, 6}, {1, 4, 7}, {2, 5, 8}, // top to bottom
+	{0, 4, 8}, {2, 4, 6}, // cross
+}
+
+// WinCondition returns true if the input mark has a win condition
+func (b Board) WinCondition(m string) bool {
+	for _, o := range winConditions {
+		if m == b[o[0]].Value &&
+			m == b[o[1]].Value &&
+			m == b[o[2]].Value {
+			return true
+		}
+	}
+	return false
+}

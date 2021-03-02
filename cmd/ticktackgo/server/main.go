@@ -12,26 +12,22 @@ import (
 	"github.com/rs/zerolog/log"
 )
 
-var messages = make(chan string)        // communicates client messages
 var closeChan = make(chan os.Signal, 1) // communicates closing of server
 
 func main() {
 	setup()
-	// 1. Create a listener
-	// 2. Listen
+	// Listen! - Zelda ref
 	listener, err := net.Listen("tcp", ":23")
 	if err != nil {
 		log.Fatal().Str("port", "23").Msg("failed to open TickTackGo server")
 	}
 	log.Info().Msgf("Opened chat server at %s\n", listener.Addr())
 
-	g := &game.Game{}
-
 	// cleanup and signal close
 	signal.Notify(closeChan, os.Interrupt)
 	go func(listener net.Listener) {
 		for range closeChan {
-			closeListener(listener, g)
+			closeListener(listener)
 		}
 	}(listener)
 	defer listener.Close()
@@ -49,8 +45,6 @@ func main() {
 			log.Error().Err(err).Msg("failed to handle new client")
 		}
 
-		// handleGame(g, c)
-
 		c.Conn.Write([]byte("Enter game code if you have one, else press enter\n"))
 		resp, err := bufio.NewReader(c.Conn).ReadString('\n')
 		if err != nil {
@@ -58,19 +52,17 @@ func main() {
 		}
 		resp = resp[:len(resp)-1]
 
-		g := &game.Game{}
 		if resp == "" {
-			g = game.NewGame()
+			g := game.NewGame()
 			g.AddClient(c)
+			go g.Handle()
 		}
 
 		if _, ok := game.Codes[resp]; !ok {
 			log.Error().Str("client", c.Conn.LocalAddr().String()).Msg("client provided bad game code")
 			// TODO Handle bad game code
 		}
-		g.AddClient(c)
-
-		// go gameHandler(g)
+		game.Codes[resp].AddClient(c)
 	}
 }
 
@@ -78,11 +70,15 @@ func setup() {
 	zerolog.TimeFieldFormat = zerolog.TimeFormatUnix
 }
 
-func closeListener(listener net.Listener, g *game.Game) {
+func closeListener(listener net.Listener) {
 	// Close all current connections
-	for _, client := range g.Clients {
-		log.Info().Str("client", client.Name).Msgf("closing client")
-		client.Close()
+	// Close out all current games
+	for k, v := range game.Codes {
+		for _, client := range v.Clients {
+			log.Info().Str("client", client.Name).Msgf("closing client")
+			client.Close("connection closed by server, due to server interrupt")
+		}
+		delete(game.Codes, k)
 	}
 	// Close listner, so as to accept no new connections
 	listener.Close()

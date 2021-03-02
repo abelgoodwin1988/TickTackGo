@@ -5,7 +5,7 @@ import (
 	"strings"
 )
 
-// Board is a tick tack toe boarf
+// Board is a tick tack toe board
 type Board []Square
 
 // Square represents a single square on a tick tack toe board

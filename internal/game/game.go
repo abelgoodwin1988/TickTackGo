@@ -1,16 +1,16 @@
 package game
 
 import (
-	"errors"
 	"math"
 	"math/rand"
 
 	"github.com/abelgoodwin1988/TickTackGo/internal/board"
 	"github.com/abelgoodwin1988/TickTackGo/internal/client"
+	"github.com/pkg/errors"
 )
 
 // Codes holds all the active game room codes
-var Codes = map[string]Game{}
+var Codes = map[string]*Game{}
 
 // Game is a current running game
 type Game struct {
@@ -22,10 +22,19 @@ type Game struct {
 
 // NewGame creates a new game
 func NewGame() *Game {
-	return &Game{
+	g := &Game{
 		Code:  NewCode(),
 		Turn:  0,
 		Board: board.CreateBoard(),
+	}
+	Codes[g.Code] = g
+	return g
+}
+
+// GameOver cleans up a game
+func (g *Game) GameOver() {
+	for _, c := range g.Clients {
+		c.Close("game over. closing server connection.")
 	}
 }
 
@@ -53,5 +62,16 @@ func (g *Game) AddClient(c *client.Client) error {
 		return errors.New("game has max number of clients")
 	}
 	g.Clients = append(g.Clients, c)
+	return nil
+}
+
+// Blast sends a message to all clients in a game
+func (g *Game) Blast(msg string) error {
+	msgB := []byte(msg)
+	for _, c := range g.Clients {
+		if err := c.Msg(msgB); err != nil {
+			return errors.Wrapf(err, "failed to blast message to client %s", c)
+		}
+	}
 	return nil
 }
