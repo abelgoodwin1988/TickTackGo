@@ -9,6 +9,9 @@
     > go run cmd/ticktackgo/server/main.go
     ```
 2. Start two clients
+    ```bash
+    > go run cmd/ticktackgo/client/main.go
+    ```
 3. In the client that was started first, provide a user name
 4. When prompted for a game code, in the first client, press enter
 5. In the client that was started second, provide a username, and then provide the code from the first client
