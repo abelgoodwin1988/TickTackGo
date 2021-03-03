@@ -13,7 +13,7 @@ type Square struct {
 	Value string `validate:"oneof:X O  "`
 }
 
-var boardRule = strings.Repeat("-", 20)
+var boardRule = strings.Repeat("-", 17)
 
 // String returns the string representation of a tick tack toe board
 func (b Board) String() string {

@@ -4,11 +4,12 @@ import (
 	"fmt"
 
 	"github.com/abelgoodwin1988/TickTackGo/internal/validate"
+	"github.com/rs/zerolog/log"
 )
 
 // CreateBoard creates an empty tick tack toe board
 func CreateBoard() Board {
-	b := make(Board, 8)
+	b := make(Board, 9)
 	return b
 }
 
@@ -39,8 +40,10 @@ func (b Board) WinCondition(m string) bool {
 		if m == b[o[0]].Value &&
 			m == b[o[1]].Value &&
 			m == b[o[2]].Value {
+			log.Info().Msg("win condition!")
 			return true
 		}
 	}
+	log.Info().Msg("no win condition yet")
 	return false
 }

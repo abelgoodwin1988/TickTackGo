@@ -2,6 +2,7 @@ package main
 
 import (
 	"bufio"
+	"fmt"
 	"net"
 	"os"
 	"os/signal"
@@ -21,7 +22,7 @@ func main() {
 	if err != nil {
 		log.Fatal().Str("port", "23").Msg("failed to open TickTackGo server")
 	}
-	log.Info().Msgf("Opened chat server at %s\n", listener.Addr())
+	log.Info().Str("address", listener.Addr().String()).Msgf("opened chat server")
 
 	// cleanup and signal close
 	signal.Notify(closeChan, os.Interrupt)
@@ -45,7 +46,7 @@ func main() {
 			log.Error().Err(err).Msg("failed to handle new client")
 		}
 
-		c.Conn.Write([]byte("Enter game code if you have one, else press enter\n"))
+		c.Msg("Enter game code if you have one, else press enter")
 		resp, err := bufio.NewReader(c.Conn).ReadString('\n')
 		if err != nil {
 			log.Error().Err(err).Msg("failed to read client response for game code")
@@ -54,14 +55,18 @@ func main() {
 
 		if resp == "" {
 			g := game.NewGame()
+			c.Mark = "X"
 			g.AddClient(c)
+			c.Msg(fmt.Sprintf("Game Code: %s", g.Code))
 			go g.Handle()
+			continue
 		}
 
 		if _, ok := game.Codes[resp]; !ok {
 			log.Error().Str("client", c.Conn.LocalAddr().String()).Msg("client provided bad game code")
 			// TODO Handle bad game code
 		}
+		c.Mark = "O"
 		game.Codes[resp].AddClient(c)
 	}
 }

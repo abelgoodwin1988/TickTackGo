@@ -45,7 +45,7 @@ func NewCode() string {
 	// 65-90 represents the hex value for all uppercase english alphabet characters
 	c := []rune{}
 	for i := 1; i < 5; i++ {
-		c = append(c, rune(rand.Intn(90-65)))
+		c = append(c, rune(rand.Intn(90-65)+65))
 	}
 	return string(c)
 }
@@ -67,9 +67,8 @@ func (g *Game) AddClient(c *client.Client) error {
 
 // Blast sends a message to all clients in a game
 func (g *Game) Blast(msg string) error {
-	msgB := []byte(msg)
 	for _, c := range g.Clients {
-		if err := c.Msg(msgB); err != nil {
+		if err := c.Msg(msg); err != nil {
 			return errors.Wrapf(err, "failed to blast message to client %s", c)
 		}
 	}
